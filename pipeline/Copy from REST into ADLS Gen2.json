@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "CopyData",
+				"name": "CopyFromRestToADLS",
 				"type": "Copy",
 				"dependsOn": [
 					{
