@@ -1,0 +1,200 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "netanel-data-factory"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_TransformMovies')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "MoviesDB",
+								"type": "DatasetReference"
+							},
+							"name": "MoviesDBFile"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "MoviesParquetSink",
+								"type": "DatasetReference"
+							},
+							"name": "Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "FilterYears"
+						},
+						{
+							"name": "AggregateComedyRatings"
+						},
+						{
+							"name": "AddContentMD5"
+						}
+					],
+					"script": "parameters{\n\tGenreFilter as string,\n\tAggColumn as integer,\n\tFileContentMD5 as string\n}\nsource(output(\n\t\tmovie as integer,\n\t\ttitle as string,\n\t\tgenres as string,\n\t\tyear as short,\n\t\tRating as short,\n\t\t{Rotton Tomato} as short\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdateFormats: ['dd/MM/yyyy'],\n\ttimestampFormats: ['MM/dd/yyyy HH:mm:ss']) ~> MoviesDBFile\nMoviesDBFile filter(between(year, 1910, 2000)) ~> FilterYears\nFilterYears aggregate(groupBy(year = $AggColumn),\n\tAverageAggColumn = avg($AggColumn)) ~> AggregateComedyRatings\nAggregateComedyRatings derive(FileContentMD5 = $FileContentMD5) ~> AddContentMD5\nAddContentMD5 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tsaveOrder: 1) ~> Sink"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_TransformMoviesTest')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "TransformMovies",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "GetMoviesCSV",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_TransformMovies",
+								"type": "DataFlowReference",
+								"parameters": {
+									"GenreFilter": {
+										"value": "'@{pipeline().parameters.GenreFilter}'",
+										"type": "Expression"
+									},
+									"AggColumn": {
+										"value": "@pipeline().parameters.AggColumn",
+										"type": "Expression"
+									},
+									"FileContentMD5": {
+										"value": "'@{activity('GetMoviesCSV').output.contentMD5}'",
+										"type": "Expression"
+									}
+								},
+								"datasetParameters": {
+									"MoviesDBFile": {
+										"Container": "adftutorial",
+										"Filename": "moviesDB.csv",
+										"Directory": "sample-data"
+									},
+									"Sink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "GetMoviesCSV",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "MoviesDB",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"contentMD5",
+								"structure",
+								"columnCount"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					}
+				],
+				"parameters": {
+					"GenreFilter": {
+						"type": "string",
+						"defaultValue": "Drama"
+					},
+					"AggColumn": {
+						"type": "string",
+						"defaultValue": "Rating"
+					}
+				},
+				"annotations": [
+					"pipeline",
+					"dataflow"
+				],
+				"lastPublishTime": "2021-05-26T19:01:19Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_TransformMovies')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Every5minutes')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PL_DeltaLoadSQL2Blob",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 5,
+						"startTime": "2021-05-27T06:10:00Z",
+						"endTime": "2021-05-28T06:25:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
