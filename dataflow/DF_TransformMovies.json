@@ -1,0 +1,38 @@
+{
+	"name": "DF_TransformMovies",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "MoviesDB",
+						"type": "DatasetReference"
+					},
+					"name": "MoviesDBFile"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "MoviesParquetSink",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FilterYears"
+				},
+				{
+					"name": "AggregateComedyRatings"
+				},
+				{
+					"name": "AddContentMD5"
+				}
+			],
+			"script": "parameters{\n\tGenreFilter as string,\n\tAggColumn as integer,\n\tFileContentMD5 as string\n}\nsource(output(\n\t\tmovie as integer,\n\t\ttitle as string,\n\t\tgenres as string,\n\t\tyear as short,\n\t\tRating as short,\n\t\t{Rotton Tomato} as short\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdateFormats: ['dd/MM/yyyy'],\n\ttimestampFormats: ['MM/dd/yyyy HH:mm:ss']) ~> MoviesDBFile\nMoviesDBFile filter(between(year, 1910, 2000)) ~> FilterYears\nFilterYears aggregate(groupBy(year = $AggColumn),\n\tAverageAggColumn = avg($AggColumn)) ~> AggregateComedyRatings\nAggregateComedyRatings derive(FileContentMD5 = $FileContentMD5) ~> AddContentMD5\nAddContentMD5 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tsaveOrder: 1) ~> Sink"
+		}
+	}
+}

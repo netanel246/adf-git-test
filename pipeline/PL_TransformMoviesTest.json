@@ -1,0 +1,107 @@
+{
+	"name": "PL_TransformMoviesTest",
+	"properties": {
+		"activities": [
+			{
+				"name": "TransformMovies",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "GetMoviesCSV",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DF_TransformMovies",
+						"type": "DataFlowReference",
+						"parameters": {
+							"GenreFilter": {
+								"value": "'@{pipeline().parameters.GenreFilter}'",
+								"type": "Expression"
+							},
+							"AggColumn": {
+								"value": "@pipeline().parameters.AggColumn",
+								"type": "Expression"
+							},
+							"FileContentMD5": {
+								"value": "'@{activity('GetMoviesCSV').output.contentMD5}'",
+								"type": "Expression"
+							}
+						},
+						"datasetParameters": {
+							"MoviesDBFile": {
+								"Container": "adftutorial",
+								"Filename": "moviesDB.csv",
+								"Directory": "sample-data"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "GetMoviesCSV",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "MoviesDB",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"contentMD5",
+						"structure",
+						"columnCount"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"GenreFilter": {
+				"type": "string",
+				"defaultValue": "Drama"
+			},
+			"AggColumn": {
+				"type": "string",
+				"defaultValue": "Rating"
+			}
+		},
+		"annotations": [
+			"pipeline",
+			"dataflow"
+		],
+		"lastPublishTime": "2021-05-26T19:01:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

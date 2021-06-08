@@ -1,0 +1,22 @@
+{
+	"name": "netanel-data-factory",
+	"properties": {
+		"globalParameters": {
+			"testArray": {
+				"type": "array",
+				"value": [
+					1,
+					2,
+					3,
+					4
+				]
+			}
+		}
+	},
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "9fa46ffe-00c4-44db-bbe9-6503ab2aa598",
+		"tenantId": "fb4fd283-c2b7-42ed-88b5-5182e236f675"
+	}
+}

@@ -1,0 +1,25 @@
+{
+	"name": "Every5minutes",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "PL_DeltaLoadSQL2Blob",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 5,
+				"startTime": "2021-05-27T06:10:00Z",
+				"endTime": "2021-05-28T06:25:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}
