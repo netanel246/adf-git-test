@@ -21,7 +21,7 @@
 			"value": "https://ADF2021.vault.azure.net/"
 		},
 		"RestService_properties_typeProperties_url": {
-			"value": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token"
+			"value": "@{linkedService().BaseURL}"
 		},
 		"containerUri": {
 			"value": ""

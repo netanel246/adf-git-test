@@ -29,7 +29,7 @@
 		},
 		"RestService_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token"
+			"defaultValue": "@{linkedService().BaseURL}"
 		}
 	},
 	"variables": {
@@ -149,6 +149,12 @@
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"parameters": {
+					"BaseURL": {
+						"type": "String",
+						"defaultValue": "https://management.azure.com/tenants?api-version=2020-01-01"
+					}
+				},
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
@@ -513,10 +519,12 @@
 				},
 				"parameters": {
 					"Container": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "data"
 					},
 					"Directory": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "learn-adf/rest2adls_template"
 					}
 				},
 				"annotations": [],
@@ -737,7 +745,94 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Copy from REST into ADLS Gen2')]",
+			"name": "[concat(parameters('factoryName'), '/CopyFromRESTToBLOB')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CopyFromRestToADLS_WithoutBarrier",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"additionalHeaders": {
+									"Authorization": {
+										"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyIsImtpZCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyJ9.eyJhdWQiOiJodHRwczovL21hbmFnZW1lbnQuY29yZS53aW5kb3dzLm5ldC8iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9hNzRmODNiZi0xMDBjLTRmYWQtOTZhMS05NzJjZjUwNWNmYzkvIiwiaWF0IjoxNjIzMjUwMjI5LCJuYmYiOjE2MjMyNTAyMjksImV4cCI6MTYyMzI1NDEyOSwiYWNyIjoiMSIsImFpbyI6IkFVUUF1LzhUQUFBQWdqcXFFT0l4T1J1a2ZTUHM1aFkzZm0rUHdMMWxFYVAzNU12OU1SaUxoVXYzUUxySk1PWTNlSUIrZlZvaG9pMDlBY3NhMlIxRHJWcUlRZjRRNkFHdlNBPT0iLCJhbXIiOlsicHdkIiwibWZhIl0sImFwcGlkIjoiN2Y1OWE3NzMtMmVhZi00MjljLWEwNTktNTBmYzViYjI4YjQ0IiwiYXBwaWRhY3IiOiIyIiwiZmFtaWx5X25hbWUiOiJNYWxrYSIsImdpdmVuX25hbWUiOiJOZXRhbmVsIiwiaXBhZGRyIjoiNS4yOS4zOC4yMDYiLCJuYW1lIjoiTmV0YW5lbCBNYWxrYSIsIm9pZCI6IjM5NTUyZDA1LTgwYzgtNGY5Ny04M2U5LTExM2JiYTliOWZmMiIsIm9ucHJlbV9zaWQiOiJTLTEtNS0yMS0xNjUzMTM0NDY3LTI4MjMzNjgzOTgtMjUxOTMxOTUzOS01NTY4IiwicHVpZCI6IjEwMDMzRkZGQTI5ODlEOUYiLCJyaCI6IjAuQVM4QXY0TlBwd3dRclUtV29aY3M5UVhQeVhPbldYLXZMcHhDb0ZsUV9GdXlpMFF2QUJ3LiIsInNjcCI6InVzZXJfaW1wZXJzb25hdGlvbiIsInN1YiI6Im45ZFd5cDNhUTB6amRIOThGRzM3b3N6Q1ZwMS1PYTJqRHBaQWlKM1RBUUEiLCJ0aWQiOiJhNzRmODNiZi0xMDBjLTRmYWQtOTZhMS05NzJjZjUwNWNmYzkiLCJ1bmlxdWVfbmFtZSI6Im5ldGFuZWxtQHNlbGEuY28uaWwiLCJ1cG4iOiJuZXRhbmVsbUBzZWxhLmNvLmlsIiwidXRpIjoidUxXVm5qSkxxRWVTSzlfZEpqLWZBQSIsInZlciI6IjEuMCIsIndpZHMiOlsiYjc5ZmJmNGQtM2VmOS00Njg5LTgxNDMtNzZiMTk0ZTg1NTA5Il0sInhtc190Y2R0IjoxNDQzNjg3NjQzfQ.e-pj8nboq5CqXHoQKnmoMZBMAMijC3zpy0pxcykt-qyQEAgoAaTmPHT4Z7_DkoKIDi-F1T1FmyOKQTpMmTFohP-X-uHzmJCGMmbGegpEyW8Y5bRR3XrW2y41OhgHio9AVp_i70zJTg4Zfwoe4smEm76McHdGNvGA0iR1ZR1YMndyJQXrTUqsKw-_pvUMHgXEesLN-H-_CIv82K6ZeTvHbUfUkP3IU_8JEfQUGWDa5Z1f14J_Oo-KDQxZ_ed_4Wz9L74q90exSY1nxLIv26b4zXCtujxNGaAqYx0DRiU0WTrUZvdWJKPvGjAwu-1bTvIlW-BqTuUHZJdnaVpHw4n4WQ",
+										"type": "Expression"
+									}
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "RestResource",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "SinkDataset",
+								"type": "DatasetReference",
+								"parameters": {
+									"Container": {
+										"value": "@pipeline().parameters.SinkContainer",
+										"type": "Expression"
+									},
+									"Directory": {
+										"value": "@pipeline().parameters.SinkDirectory",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"parameters": {
+					"SinkContainer": {
+						"type": "string",
+						"defaultValue": "data"
+					},
+					"SinkDirectory": {
+						"type": "string",
+						"defaultValue": "learn-adf/rest2adls_template"
+					}
+				},
+				"folder": {
+					"name": "Learning"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/RestResource')]",
+				"[concat(variables('factoryId'), '/datasets/SinkDataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CopyFromRESTToBLOBWithBearer')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -823,17 +918,71 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"url": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token",
+							"url": "https://management.azure.com/tenants?api-version=2020-01-01",
 							"connectVia": {
 								"referenceName": "AutoResolveIntegrationRuntime",
 								"type": "IntegrationRuntimeReference"
 							},
-							"method": "POST",
+							"method": "GET",
 							"headers": {
-								"Content-Type": "application/x-www-form-urlencoded"
+								"Content-Type": "application/json"
 							},
-							"body": "grant_type=client_credentials&client_id=<service principal ID>&resource=<your resource>&client_secret=<service principal key>"
+							"body": ""
 						}
+					},
+					{
+						"name": "CopyFromRestToADLS_WithoutBarrier",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET"
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "RestResource",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "SinkDataset",
+								"type": "DatasetReference",
+								"parameters": {
+									"Container": {
+										"value": "@pipeline().parameters.SinkContainer",
+										"type": "Expression"
+									},
+									"Directory": {
+										"value": "@pipeline().parameters.SinkDirectory",
+										"type": "Expression"
+									}
+								}
+							}
+						]
 					}
 				],
 				"parameters": {
@@ -1047,164 +1196,6 @@
 				"[concat(variables('factoryId'), '/datasets/AzureSqlGenericTable')]",
 				"[concat(variables('factoryId'), '/datasets/CSVGenericBlobStorage')]",
 				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PL_MoviesFile2DB')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "CopyMoviesToDB",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [
-							{
-								"name": "Source",
-								"value": "data//moviesDB.csv"
-							},
-							{
-								"name": "Destination",
-								"value": "dbo.MoviesTable"
-							}
-						],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"tableOption": "autoCreate"
-							},
-							"enableStaging": false,
-							"validateDataConsistency": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "movie",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "movie",
-											"type": "Int32",
-											"physicalType": "int"
-										}
-									},
-									{
-										"source": {
-											"name": "title",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "title",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "genres",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "genres",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "year",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "year",
-											"type": "Int32",
-											"physicalType": "int"
-										}
-									},
-									{
-										"source": {
-											"name": "Rating",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Rating",
-											"type": "Int32",
-											"physicalType": "int"
-										}
-									},
-									{
-										"source": {
-											"name": "Rotton Tomato",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Rotton Tomato",
-											"type": "Int32",
-											"physicalType": "int"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "MoviesDB",
-								"type": "DatasetReference",
-								"parameters": {
-									"Container": "/data",
-									"Filename": "moviesDB.csv"
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "SQLMoviesTable",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					}
-				],
-				"annotations": [
-					"pipeline",
-					"copy"
-				],
-				"lastPublishTime": "2021-05-26T18:07:05Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/MoviesDB')]",
-				"[concat(variables('factoryId'), '/datasets/SQLMoviesTable')]"
 			]
 		}
 	]

@@ -29,7 +29,7 @@
 		},
 		"RestService_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token"
+			"defaultValue": "@{linkedService().BaseURL}"
 		},
 		"containerUri": {
 			"type": "string",
