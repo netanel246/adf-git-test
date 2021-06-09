@@ -2,7 +2,7 @@
 	"name": "Every5minutes",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Stopped",
+		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
@@ -15,9 +15,9 @@
 		"typeProperties": {
 			"recurrence": {
 				"frequency": "Minute",
-				"interval": 5,
-				"startTime": "2021-05-27T06:10:00Z",
-				"endTime": "2021-05-28T06:25:00Z",
+				"interval": 1,
+				"startTime": "2021-06-09T16:02:00Z",
+				"endTime": "2021-06-09T16:20:00Z",
 				"timeZone": "UTC"
 			}
 		}
