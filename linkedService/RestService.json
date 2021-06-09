@@ -1,10 +1,16 @@
 {
 	"name": "RestService",
 	"properties": {
+		"parameters": {
+			"BaseURL": {
+				"type": "String",
+				"defaultValue": "https://management.azure.com/tenants?api-version=2020-01-01"
+			}
+		},
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token",
+			"url": "@{linkedService().BaseURL}",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		},

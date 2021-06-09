@@ -8,10 +8,12 @@
 		},
 		"parameters": {
 			"Container": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "data"
 			},
 			"Directory": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "learn-adf/rest2adls_template"
 			}
 		},
 		"annotations": [],
