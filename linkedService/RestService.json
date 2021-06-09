@@ -1,10 +1,15 @@
 {
 	"name": "RestService",
 	"properties": {
+		"parameters": {
+			"RestURL": {
+				"type": "String"
+			}
+		},
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token",
+			"url": "@{linkedService().RestURL}",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		},
