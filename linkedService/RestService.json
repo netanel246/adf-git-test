@@ -2,14 +2,15 @@
 	"name": "RestService",
 	"properties": {
 		"parameters": {
-			"RestURL": {
-				"type": "String"
+			"BaseURL": {
+				"type": "String",
+				"defaultValue": "https://management.azure.com/tenants?api-version=2020-01-01"
 			}
 		},
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "@{linkedService().RestURL}",
+			"url": "@{linkedService().BaseURL}",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		},
